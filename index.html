@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Den Helder Navigator | Route & Bereik Planner</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/@turf/turf@6.5.0/turf.min.js"></script>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { height: 100%; font-family: 'Inter', system-ui, sans-serif; overflow: hidden; }
+        #map { height: 100vh; width: 100%; position: absolute; top: 0; left: 0; z-index: 1; background: #e9f0f5; }
+        .sidebar-glass { position: fixed; top: 20px; left: 20px; width: 380px; height: calc(100% - 40px); background: rgba(255,255,255,0.96); backdrop-filter: blur(12px); border-radius: 28px; box-shadow: 0 20px 35px -12px rgba(0,0,0,0.2); z-index: 1000; overflow-y: auto; transition: all 0.35s cubic-bezier(0.2,0.9,0.4,1.1); border: 1px solid rgba(255,255,255,0.4); }
+        .sidebar-glass.collapsed { transform: translateX(-360px); opacity: 0.95; }
+        .dark .sidebar-glass { background: rgba(18,25,38,0.96); border-color: rgba(255,255,255,0.1); }
+        .sidebar-glass::-webkit-scrollbar { width: 5px; }
+        .sidebar-glass::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
+        .toggle-btn-modern { position: fixed; top: 32px; left: 410px; z-index: 1001; background: white; border-radius: 40px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); cursor: pointer; transition: all 0.2s; border: 1px solid rgba(0,0,0,0.08); }
+        .dark .toggle-btn-modern { background: #1e293b; color: white; border-color: #334155; }
+        .search-modern { position: fixed; top: 24px; left: 460px; z-index: 1000; width: 340px; background: rgba(255,255,255,0.98); backdrop-filter: blur(12px); border-radius: 48px; box-shadow: 0 8px 20px rgba(0,0,0,0.12); border: 1px solid rgba(255,255,255,0.6); }
+        .dark .search-modern { background: rgba(30,41,59,0.98); border-color: #334155; }
+        .search-modern input { background: transparent; border: none; padding: 12px 20px; font-size: 0.95rem; width: 100%; outline: none; }
+        .dark .search-modern input { color: white; }
+        .search-modern button { background: #3b82f6; border-radius: 40px; margin: 6px; padding: 0 18px; font-weight: 500; }
+        .waypoint-card { background: #f9fafb; border-radius: 16px; padding: 10px 12px; margin: 8px 0; transition: all 0.2s; border-left: 4px solid #3b82f6; display: flex; justify-content: space-between; align-items: center; }
+        .dark .waypoint-card { background: #1f2a3e; }
+        .waypoint-card.start { border-left-color: #10b981; }
+        .waypoint-card.end { border-left-color: #ef4444; }
+        .waypoint-card:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0,0,0,0.08); }
+        .badge-index { width: 28px; height: 28px; border-radius: 30px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; }
+        .glass-panel { background: rgba(255,255,255,0.85); backdrop-filter: blur(8px); border-radius: 20px; padding: 12px 16px; margin-top: 12px; border: 1px solid rgba(255,255,255,0.5); }
+        .dark .glass-panel { background: rgba(15,23,42,0.85); border-color: #334155; }
+        .floating-status { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); color: white; padding: 10px 24px; border-radius: 60px; font-size: 0.9rem; z-index: 1100; background: rgba(0,0,0,0.75); pointer-events: none; transition: opacity 0.2s; font-weight: 500; box-shadow: 0 6px 14px rgba(0,0,0,0.2); }
+        .modal-modern { background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }
+        .modal-content { background: white; border-radius: 32px; max-width: 680px; width: 90%; max-height: 80vh; }
+        .dark .modal-content { background: #1e293b; }
+        .suggestions-list { position: absolute; top: 58px; left: 0; right: 0; background: white; border-radius: 24px; box-shadow: 0 12px 28px rgba(0,0,0,0.2); z-index: 1100; overflow: hidden; display: none; }
+        .dark .suggestions-list { background: #1e293b; }
+        .suggestion-item { padding: 12px 20px; cursor: pointer; transition: background 0.15s; }
+        .suggestion-item:hover { background: #eef2ff; }
+        @media (max-width: 700px) { .sidebar-glass { width: 90%; left: 5%; } .toggle-btn-modern { left: auto; right: 20px; } .search-modern { left: 20px; right: 20px; width: auto; top: 80px; } }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
+    <div id="map"></div>
+    <div id="sidebar" class="sidebar-glass">
+        <div class="p-5">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-700 to-indigo-600 bg-clip-text text-transparent">
+                        <i class="fas fa-ship mr-2 text-blue-600"></i>Den Helder Navigator
+                    </h1>
+                    <p class="text-xs text-gray-500 mt-1">Maritieme routeplanner & isochronen</p>
+                </div>
+                <button id="themeToggle" class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 transition">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+            <div class="mb-5">
+                <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300"><i class="fas fa-map mr-1"></i> Kaartstijl</label>
+                <select id="baseMap" class="w-full p-3 rounded-2xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm">
+                    <option value="carto-light">CartoDB Positron (helder)</option>
+                    <option value="carto-dark">CartoDB Dark (nacht)</option>
+                    <option value="voyager">CartoDB Voyager (straten)</option>
+                </select>
+            </div>
+            <div class="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl mb-5">
+                <button data-tab="route" class="tab-btn-modern flex-1 py-2.5 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"><i class="fas fa-route"></i> Route</button>
+                <button data-tab="isochrone" class="tab-btn-modern flex-1 py-2.5 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"><i class="fas fa-chart-line"></i> Bereik</button>
+                <button data-tab="help" class="tab-btn-modern flex-1 py-2.5 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"><i class="fas fa-life-ring"></i> Info</button>
+            </div>
+            <div id="tab-route" class="tab-panel">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1"><i class="fas fa-tachometer-alt mr-1"></i> Vervoer</label>
+                    <select id="transportMode" class="w-full p-3 rounded-xl border bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
+                        <option value="driving-car">🚗 Auto</option>
+                        <option value="cycling-regular">🚲 Fiets</option>
+                        <option value="foot-walking">🚶 Lopen</option>
+                        <option value="driving-hgv">🚛 Vrachtwagen</option>
+                    </select>
+                </div>
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="font-bold text-gray-800 dark:text-white"><i class="fas fa-map-pin mr-1"></i> Routepunten</h3>
+                    <div class="flex gap-2">
+                        <button id="reverseRoute" class="text-xs bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-full transition"><i class="fas fa-exchange-alt mr-1"></i> Omkeren</button>
+                        <button id="addWaypoint" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-full transition"><i class="fas fa-plus mr-1"></i> Punt</button>
+                    </div>
+                </div>
+                <div id="waypointsContainer" class="max-h-52 overflow-y-auto space-y-2 pr-1 mb-4"></div>
+                <button id="showRoute" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 text-white py-3 rounded-2xl font-bold shadow-md transition flex items-center justify-center gap-2">
+                    <i class="fas fa-route"></i> BEREKEN ROUTE
+                </button>
+                <div id="routeInfo" class="glass-panel hidden mt-4">
+                    <div class="flex justify-between items-center"><span><i class="fas fa-road text-blue-500"></i> Afstand</span><span id="distance" class="font-mono font-bold">—</span></div>
+                    <div class="flex justify-between items-center mt-2"><span><i class="fas fa-hourglass-half text-blue-500"></i> Reistijd</span><span id="duration" class="font-mono font-bold">—</span></div>
+                </div>
+            </div>
+            <div id="tab-isochrone" class="tab-panel hidden">
+                <h3 class="text-lg font-bold mb-3">⏱️ Bereik binnen tijd</h3>
+                <div class="mb-5">
+                    <div class="flex gap-3 items-center mb-2">
+                        <span class="text-sm">Reistijd (min):</span>
+                        <input type="number" id="timeInput" min="1" max="180" value="15" class="w-20 p-2 border rounded-xl text-center bg-white dark:bg-gray-800">
+                        <span class="text-sm">min</span>
+                    </div>
+                    <input type="range" id="timeRange" min="1" max="180" value="15" class="w-full accent-blue-600">
+                    <div class="flex justify-between text-xs text-gray-500 mt-1"><span>1 min</span><span id="timeValue" class="font-semibold">15 min</span><span>180 min</span></div>
+                </div>
+                <button id="showServiceArea" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 text-white py-3 rounded-2xl font-bold shadow-md flex items-center justify-center gap-2">
+                    <i class="fas fa-chart-area"></i> TOON BEREIK
+                </button>
+                <div id="serviceInfo" class="glass-panel hidden mt-4">
+                    <div class="flex justify-between"><span><i class="fas fa-expand-alt"></i> Oppervlakte</span><span id="isochroneArea" class="font-bold">— km²</span></div>
+                </div>
+            </div>
+            <div id="tab-help" class="tab-panel hidden text-sm space-y-3">
+                <div class="flex items-start gap-3"><i class="fas fa-fingerprint text-blue-500 text-lg mt-0.5"></i><p>Klik op de kaart → voeg routepunten toe.</p></div>
+                <div class="flex items-start gap-3"><i class="fas fa-search-location text-emerald-500 text-lg"></i><p>Zoek adressen via de zoekbalk.</p></div>
+                <div class="flex items-start gap-3"><i class="fas fa-draw-polygon text-purple-500 text-lg"></i><p>Bereik analyse: startpunt = eerste marker.</p></div>
+                <div class="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-xl mt-2"><i class="fas fa-info-circle text-blue-600"></i> Routes via Cloudflare proxy (veilig).</div>
+            </div>
+            <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div class="grid grid-cols-2 gap-3">
+                    <button id="exportData" class="bg-purple-600 hover:bg-purple-700 text-white py-2.5 rounded-xl flex items-center justify-center gap-2"><i class="fas fa-download"></i> Exporteer</button>
+                    <button id="exploreData" class="bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl flex items-center justify-center gap-2"><i class="fas fa-database"></i> Data</button>
+                </div>
+                <button id="clearAll" class="w-full mt-3 bg-gray-500 hover:bg-gray-600 text-white py-2.5 rounded-xl flex items-center justify-center gap-2"><i class="fas fa-trash-alt"></i> Alles wissen</button>
+            </div>
+        </div>
+    </div>
+    <div id="toggleSidebar" class="toggle-btn-modern"><i class="fas fa-chevron-left text-lg"></i></div>
+    <div class="search-modern relative">
+        <div class="flex items-center">
+            <input type="text" id="searchInput" placeholder="Zoek in Den Helder..." class="flex-1 pl-5 pr-2">
+            <button id="searchBtn" class="text-white px-5 py-2 rounded-full"><i class="fas fa-arrow-right"></i></button>
+        </div>
+        <div id="suggestions" class="suggestions-list"></div>
+    </div>
+    <div id="statusMessage" class="floating-status opacity-0 transition-all duration-300 pointer-events-none"></div>
+    <div id="dataModal" class="fixed inset-0 modal-modern hidden items-center justify-center z-[2000]">
+        <div class="modal-content p-6 max-h-[85vh] overflow-auto">
+            <div class="flex justify-between items-center border-b pb-3"><h3 class="text-xl font-bold"><i class="fas fa-code"></i> GeoJSON Explorer</h3><button id="closeModalBtn" class="text-2xl">&times;</button></div>
+            <div class="mt-4 space-y-4">
+                <div><h4 class="font-semibold">📌 Route data</h4><pre id="routePreview" class="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg text-xs overflow-x-auto max-h-44"></pre></div>
+                <div><h4 class="font-semibold">🗺️ Bereik data</h4><pre id="isoPreview" class="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg text-xs overflow-x-auto max-h-44"></pre></div>
+            </div>
+            <div class="flex gap-3 mt-5">
+                <button id="copyGeoJsonBtn" class="flex-1 bg-blue-600 text-white py-2 rounded-xl"><i class="fas fa-copy"></i> Kopieer</button>
+                <button id="downloadGeoJsonBtn" class="flex-1 bg-green-600 text-white py-2 rounded-xl"><i class="fas fa-save"></i> Download</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ✅ PROXY URL — API key is hidden on Cloudflare server
+        const PROXY_URL = 'https://ors-proxy.zahedahmad1997.workers.dev';
+
+        const tileLayers = {
+            'carto-light': L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OSM & CartoDB', subdomains: 'abcd' }),
+            'carto-dark':  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',  { attribution: 'CartoDB' }),
+            'voyager':     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: 'CartoDB Voyager' })
+        };
+
+        const map = L.map('map').setView([52.9593, 4.7597], 13);
+        let activeLayer = tileLayers['carto-light'];
+        activeLayer.addTo(map);
+
+        let waypoints = [], routeLayer = null, isochroneLayer = null;
+        let markersGroup = L.layerGroup().addTo(map);
+        let currentRouteGeoJSON = null, currentIsoGeoJSON = null;
+
+        function showStatus(msg, isError = false, duration = 3000) {
+            const el = document.getElementById('statusMessage');
+            el.textContent = msg;
+            el.style.background = isError ? 'rgba(220,38,38,0.9)' : 'rgba(0,0,0,0.8)';
+            el.style.opacity = '1';
+            setTimeout(() => { el.style.opacity = '0'; }, duration);
+        }
+
+        function updateWaypointUI() {
+            const container = document.getElementById('waypointsContainer');
+            if (!container) return;
+            container.innerHTML = '';
+            waypoints.forEach((wp, idx) => {
+                const typeClass = idx === 0 ? 'start' : (idx === waypoints.length - 1 ? 'end' : '');
+                const label = idx === 0 ? 'Start' : (idx === waypoints.length - 1 ? 'Eind' : `Punt ${idx + 1}`);
+                const div = document.createElement('div');
+                div.className = `waypoint-card ${typeClass}`;
+                div.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="badge-index ${idx===0?'bg-green-500':idx===waypoints.length-1?'bg-red-500':'bg-blue-500'} text-white">${idx+1}</div>
+                        <div class="text-sm font-mono">${wp.latlng.lat.toFixed(5)}, ${wp.latlng.lng.toFixed(5)}<br><span class="text-xs text-gray-500">${label}</span></div>
+                    </div>
+                    <div class="flex gap-1">
+                        ${idx > 0 ? `<button class="move-up-btn w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-600" data-idx="${idx}"><i class="fas fa-arrow-up text-xs"></i></button>` : ''}
+                        ${idx < waypoints.length-1 ? `<button class="move-down-btn w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-600" data-idx="${idx}"><i class="fas fa-arrow-down text-xs"></i></button>` : ''}
+                        <button class="remove-btn w-7 h-7 rounded-full bg-red-100 text-red-600" data-idx="${idx}"><i class="fas fa-trash-alt text-xs"></i></button>
+                    </div>`;
+                container.appendChild(div);
+            });
+            document.querySelectorAll('.remove-btn').forEach(btn => btn.addEventListener('click', () => removeWaypoint(parseInt(btn.dataset.idx))));
+            document.querySelectorAll('.move-up-btn').forEach(btn => btn.addEventListener('click', () => moveWaypoint(parseInt(btn.dataset.idx), parseInt(btn.dataset.idx)-1)));
+            document.querySelectorAll('.move-down-btn').forEach(btn => btn.addEventListener('click', () => moveWaypoint(parseInt(btn.dataset.idx), parseInt(btn.dataset.idx)+1)));
+        }
+
+        function removeWaypoint(idx) { markersGroup.removeLayer(waypoints[idx].marker); waypoints.splice(idx, 1); rebuildMarkersFromArray(); updateWaypointUI(); showStatus('Punt verwijderd'); }
+        function moveWaypoint(from, to) { if (to < 0 || to >= waypoints.length) return; [waypoints[from], waypoints[to]] = [waypoints[to], waypoints[from]]; rebuildMarkersFromArray(); updateWaypointUI(); }
+
+        function rebuildMarkersFromArray() {
+            markersGroup.clearLayers();
+            waypoints.forEach((wp, i) => {
+                const color = i === 0 ? '#10b981' : (i === waypoints.length - 1 ? '#ef4444' : '#3b82f6');
+                const icon = L.divIcon({ html: `<div style="background:${color};width:28px;height:28px;border-radius:50%;border:2px solid white;box-shadow:0 2px 5px black;display:flex;align-items:center;justify-content:center;font-weight:bold;color:white;">${i+1}</div>`, iconSize: [28, 28], className: 'custom-marker' });
+                const marker = L.marker(wp.latlng, { draggable: true, icon }).addTo(markersGroup);
+                marker.on('dragend', () => { waypoints[i].latlng = marker.getLatLng(); updateWaypointUI(); });
+                wp.marker = marker;
+            });
+        }
+
+        function addWaypointFromLatLng(latlng) { waypoints.push({ latlng, marker: null }); rebuildMarkersFromArray(); updateWaypointUI(); showStatus(`Punt ${waypoints.length} toegevoegd`); }
+
+        // ✅ Route via Proxy
+        async function calculateRoute() {
+            if (waypoints.length < 2) { showStatus('Voeg minimaal 2 punten toe', true); return; }
+            const profile = document.getElementById('transportMode').value;
+            const coords = waypoints.map(w => [w.latlng.lng, w.latlng.lat]);
+            try {
+                const res = await fetch(`${PROXY_URL}/v2/directions/${profile}/geojson`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ coordinates: coords })
+                });
+                if (!res.ok) throw new Error('Route fout');
+                const data = await res.json();
+                currentRouteGeoJSON = data;
+                if (routeLayer) map.removeLayer(routeLayer);
+                if (data.features?.length) {
+                    routeLayer = L.geoJSON(data.features[0], { style: { color: '#3b82f6', weight: 6, opacity: 0.9 } }).addTo(map);
+                    map.fitBounds(routeLayer.getBounds(), { padding: [30, 30] });
+                    const s = data.features[0].properties.summary;
+                    document.getElementById('distance').innerHTML = (s.distance / 1000).toFixed(2) + ' km';
+                    document.getElementById('duration').innerHTML = Math.floor(s.duration / 60) + ' min';
+                    document.getElementById('routeInfo').classList.remove('hidden');
+                    showStatus('Route geladen ✅');
+                }
+            } catch (e) { showStatus(`Fout: ${e.message}`, true); }
+        }
+
+        // ✅ Isochrone via Proxy
+        async function calcIsochrone() {
+            if (waypoints.length === 0) { showStatus('Startpunt nodig', true); return; }
+            const start = waypoints[0].latlng;
+            const minutes = parseInt(document.getElementById('timeRange').value);
+            const profile = document.getElementById('transportMode').value;
+            try {
+                const res = await fetch(`${PROXY_URL}/v2/isochrones/${profile}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ locations: [[start.lng, start.lat]], range: [minutes * 60] })
+                });
+                if (!res.ok) throw new Error('Isochrone error');
+                const data = await res.json();
+                currentIsoGeoJSON = data;
+                if (isochroneLayer) map.removeLayer(isochroneLayer);
+                if (data.features?.length) {
+                    isochroneLayer = L.geoJSON(data.features[0], { style: { color: '#ef4444', weight: 2, fillColor: '#f97316', fillOpacity: 0.35 } }).addTo(map);
+                    const area = turf.area(data.features[0].geometry) / 1000000;
+                    document.getElementById('isochroneArea').innerHTML = area.toFixed(2) + ' km²';
+                    document.getElementById('serviceInfo').classList.remove('hidden');
+                    showStatus(`Bereik ${minutes} min getoond ✅`);
+                }
+            } catch (e) { showStatus(`Fout: ${e.message}`, true); }
+        }
+
+        function switchBaseMap(v) { map.removeLayer(activeLayer); activeLayer = tileLayers[v]; activeLayer.addTo(map); }
+        function clearAll() { waypoints.forEach(w => markersGroup.removeLayer(w.marker)); waypoints = []; if (routeLayer) map.removeLayer(routeLayer); if (isochroneLayer) map.removeLayer(isochroneLayer); routeLayer = null; isochroneLayer = null; currentRouteGeoJSON = null; currentIsoGeoJSON = null; updateWaypointUI(); document.getElementById('routeInfo')?.classList.add('hidden'); document.getElementById('serviceInfo')?.classList.add('hidden'); showStatus('Alles gewist'); }
+        function reverseRouteFunc() { if (waypoints.length < 2) return; waypoints.reverse(); rebuildMarkersFromArray(); updateWaypointUI(); showStatus('Route omgekeerd'); }
+
+        let searchTimeout;
+        async function fetchSuggestions(q) {
+            if (!q) { document.getElementById('suggestions').style.display = 'none'; return; }
+            try {
+                const data = await (await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q + ', Den Helder, Nederland')}&limit=5`)).json();
+                const sugDiv = document.getElementById('suggestions');
+                sugDiv.innerHTML = '';
+                if (data.length) {
+                    data.forEach(item => { const div = document.createElement('div'); div.className = 'suggestion-item'; div.innerText = item.display_name.split(',')[0]; div.onclick = () => { map.setView([item.lat, item.lon], 15); addWaypointFromLatLng(L.latLng(item.lat, item.lon)); document.getElementById('searchInput').value = item.display_name; sugDiv.style.display = 'none'; }; sugDiv.appendChild(div); });
+                    sugDiv.style.display = 'block';
+                } else sugDiv.style.display = 'none';
+            } catch (e) { console.warn(e); }
+        }
+
+        function initTabs() {
+            document.querySelectorAll('.tab-btn-modern').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+                    document.getElementById(`tab-${btn.dataset.tab}`).classList.remove('hidden');
+                    document.querySelectorAll('.tab-btn-modern').forEach(b => b.classList.remove('bg-white', 'shadow-sm'));
+                    btn.classList.add('bg-white', 'shadow-sm');
+                });
+            });
+            document.querySelector('.tab-btn-modern').click();
+        }
+
+        document.getElementById('themeToggle').addEventListener('click', () => { document.documentElement.classList.toggle('dark'); });
+        document.getElementById('baseMap').addEventListener('change', e => switchBaseMap(e.target.value));
+        document.getElementById('toggleSidebar').addEventListener('click', () => { document.getElementById('sidebar').classList.toggle('collapsed'); const ic = document.getElementById('toggleSidebar').querySelector('i'); ic.classList.toggle('fa-chevron-left'); ic.classList.toggle('fa-chevron-right'); });
+        document.getElementById('addWaypoint').addEventListener('click', () => addWaypointFromLatLng(map.getCenter()));
+        document.getElementById('reverseRoute').addEventListener('click', reverseRouteFunc);
+        document.getElementById('showRoute').addEventListener('click', calculateRoute);
+        document.getElementById('showServiceArea').addEventListener('click', calcIsochrone);
+        document.getElementById('clearAll').addEventListener('click', clearAll);
+        document.getElementById('exportData').addEventListener('click', () => { const d = { type: 'FeatureCollection', features: [...(currentRouteGeoJSON?.features || []), ...(currentIsoGeoJSON?.features || []), ...waypoints.map((wp, i) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [wp.latlng.lng, wp.latlng.lat] }, properties: { id: i + 1 } }))] }; const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' })); a.download = 'denhelder_export.geojson'; a.click(); showStatus('Geëxporteerd'); });
+        document.getElementById('exploreData').addEventListener('click', () => { document.getElementById('routePreview').innerText = currentRouteGeoJSON ? JSON.stringify(currentRouteGeoJSON, null, 2) : 'Geen route'; document.getElementById('isoPreview').innerText = currentIsoGeoJSON ? JSON.stringify(currentIsoGeoJSON, null, 2) : 'Geen bereik'; document.getElementById('dataModal').classList.remove('hidden'); document.getElementById('dataModal').style.display = 'flex'; });
+        document.getElementById('closeModalBtn').addEventListener('click', () => { document.getElementById('dataModal').style.display = 'none'; });
+        document.getElementById('copyGeoJsonBtn').addEventListener('click', () => { navigator.clipboard.writeText(JSON.stringify({ route: currentRouteGeoJSON, isochrone: currentIsoGeoJSON }, null, 2)); showStatus('Gekopieerd'); });
+        document.getElementById('downloadGeoJsonBtn').addEventListener('click', () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({ route: currentRouteGeoJSON, isochrone: currentIsoGeoJSON }, null, 2)], { type: 'application/json' })); a.download = 'geodata.json'; a.click(); });
+        document.getElementById('searchBtn').addEventListener('click', async () => { const q = document.getElementById('searchInput').value; if (q) { const data = await (await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q + ', Den Helder')}&limit=1`)).json(); if (data[0]) { map.setView([data[0].lat, data[0].lon], 14); addWaypointFromLatLng(L.latLng(data[0].lat, data[0].lon)); } else showStatus('Niet gevonden', true); } });
+        document.getElementById('searchInput').addEventListener('input', e => { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => fetchSuggestions(e.target.value), 350); });
+        document.addEventListener('click', e => { if (!e.target.closest('.search-modern')) document.getElementById('suggestions').style.display = 'none'; });
+        document.getElementById('timeRange').addEventListener('input', () => { const v = document.getElementById('timeRange').value; document.getElementById('timeInput').value = v; document.getElementById('timeValue').innerText = `${v} min`; });
+        document.getElementById('timeInput').addEventListener('input', () => { let v = parseInt(document.getElementById('timeInput').value); if (isNaN(v)) v = 15; document.getElementById('timeRange').value = v; document.getElementById('timeValue').innerText = `${v} min`; });
+        map.on('click', e => addWaypointFromLatLng(e.latlng));
+
+        addWaypointFromLatLng(L.latLng(52.9593, 4.7597));
+        addWaypointFromLatLng(L.latLng(52.9500, 4.7700));
+        initTabs();
+        showStatus('Welkom! Klik op kaart ➕ punten toevoegen', false, 4000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+# لا ترفع أي ملف يحتوي على API key حقيقي
+.env
+*.env
+config.local.js
