@@ -7,7 +7,7 @@
 ## 🌐 Live Demo
  
 <div align="center">
-### 👉 [azahed0.github.io/den-helder](https://azahed0.github.io/den-helder/) 👈
+👉 [azahed0.github.io/den-helder](https://azahed0.github.io/den-helder/
  
 </div>
 ---
@@ -35,7 +35,6 @@
 | 🛣️ | [OpenRouteService](https://openrouteservice.org/) | Routes & isochronen |
 | 📐 | [Turf.js](https://turfjs.org/) | Geografische berekeningen |
 | 🔎 | [Nominatim / OSM](https://nominatim.org/) | Adreszoekfunctie |
-| ☁️ | [Cloudflare Workers](https://workers.cloudflare.com/) | Serverless proxy |
 | 📄 | [GitHub Pages](https://pages.github.com/) | Gratis hosting |
 | 🎨 | [Tailwind CSS](https://tailwindcss.com/) | Moderne styling |
 | 💪 | [Font Awesome](https://fontawesome.com/) | Iconen |
