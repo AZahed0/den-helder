@@ -7,8 +7,13 @@
 ## 🌐 Live Demo
  
 <div align="center">
-https://azahed0.github.io/den-helder/
  
+[![Den Helder Navigator Demo](https://img.shields.io/badge/🌊-Probeer_De_Demo-0077B5?style=for-the-badge&logo=github&logoColor=white)](https://azahed0.github.io/den-helder/)
+ 
+### 👉 **[https://azahed0.github.io/den-helder/](https://azahed0.github.io/den-helder/)** 👈
+ 
+**Klik hierboven om de applicatie direct te gebruiken — geen installatie nodig!**
+
 </div>
  
 ## ✨ Functies
