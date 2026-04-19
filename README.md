@@ -1,73 +1,101 @@
 # 🚢 Den Helder Navigator
-
-Een interactieve maritieme routeplanner en bereikanalyse tool voor Den Helder, gebouwd met Leaflet.js en OpenRouteService.
-
+ 
+> **Maritieme routeplanner & bereikanalyse voor Den Helder**  
+> Gebouwd met moderne webtechnologieën voor nauwkeurige navigatie en gebiedsanalyse.
+ 
+<div align="center">
+![Status](https://img.shields.io/badge/status-live-brightgreen?style=for-the-badge)
+![License](https://img.shields.io/badge/licentie-MIT-blue?style=for-the-badge)
+![HTML](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+![Cloudflare](https://img.shields.io/badge/Cloudflare-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)
+ 
+</div>
+---
+ 
 ## 🌐 Live Demo
-
-👉 [https://azahed0.github.io/den-helder/](https://azahed0.github.io/den-helder/)
-
+ 
+<div align="center">
+### 👉 [azahed0.github.io/den-helder](https://azahed0.github.io/den-helder/) 👈
+ 
+</div>
 ---
-
+ 
 ## ✨ Functies
-
-- **Routeplanning** — Bereken routes voor auto, fiets, lopen en vrachtwagen
-- **Bereikanalyse (Isochronen)** — Toon welk gebied bereikbaar is binnen een bepaalde reistijd
-- **Zoekbalk** — Zoek adressen in Den Helder met automatische suggesties via Nominatim
-- **Meerdere kaartstijlen** — CartoDB Positron, Dark en Voyager
-- **Dark mode** — Schakel tussen licht en donker thema
-- **GeoJSON export** — Download of kopieer route- en bereikdata
-- **Interactieve markers** — Klik op de kaart om routepunten toe te voegen, sleep om te verplaatsen
-
----
-
-## 🛠️ Technologieën
-
-| Technologie | Gebruik |
+ 
+| Functie | Beschrijving |
 |---|---|
-| [Leaflet.js](https://leafletjs.com/) | Interactieve kaart |
-| [OpenRouteService API](https://openrouteservice.org/) | Routes en isochronen |
-| [Turf.js](https://turfjs.org/) | Oppervlakteberekening |
-| [Nominatim / OSM](https://nominatim.org/) | Adreszoekfunctie |
-| [Cloudflare Workers](https://workers.cloudflare.com/) | API proxy (sleutel verborgen) |
-| [GitHub Pages](https://pages.github.com/) | Hosting |
-| [Tailwind CSS](https://tailwindcss.com/) | Styling |
-
+| 🗺️ **Routeplanning** | Bereken optimale routes tussen meerdere punten |
+| ⏱️ **Bereikanalyse** | Visualiseer bereikbaar gebied binnen een ingestelde reistijd |
+| 🔍 **Adreszoeker** | Zoek adressen met automatische suggesties |
+| 🎨 **Kaartstijlen** | Kies tussen meerdere kaartweergaven |
+| 🌙 **Dark mode** | Schakel tussen licht en donker thema |
+| 📦 **GeoJSON export** | Download of kopieer route- en bereikdata |
+| 📍 **Interactieve markers** | Klik, sleep en herorden routepunten |
+| 🔄 **Route omkeren** | Wissel start- en eindpunt met één klik |
+ 
 ---
-
-## 🔒 Beveiliging
-
-De OpenRouteService API-sleutel is **niet zichtbaar** in de broncode. Alle API-verzoeken worden via een **Cloudflare Worker proxy** gestuurd, zodat de sleutel veilig op de server blijft.
-
+ 
+## 🛠️ Technologieën
+ 
+| | Technologie | Gebruik |
+|---|---|---|
+| 🍃 | [Leaflet.js](https://leafletjs.com/) | Interactieve kaartweergave |
+| 🛣️ | [OpenRouteService](https://openrouteservice.org/) | Routes & isochronen |
+| 📐 | [Turf.js](https://turfjs.org/) | Geografische berekeningen |
+| 🔎 | [Nominatim / OSM](https://nominatim.org/) | Adreszoekfunctie |
+| ☁️ | [Cloudflare Workers](https://workers.cloudflare.com/) | Serverless proxy |
+| 📄 | [GitHub Pages](https://pages.github.com/) | Gratis hosting |
+| 🎨 | [Tailwind CSS](https://tailwindcss.com/) | Moderne styling |
+| 💪 | [Font Awesome](https://fontawesome.com/) | Iconen |
+ 
 ---
-
+ 
 ## 🚀 Lokaal uitvoeren
-
-1. Clone de repository:
-   ```bash
-   git clone https://github.com/AZahed0/den-helder.git
-   cd den-helder
-   ```
-
-2. Open `index.html` direct in je browser — geen installatie nodig.
-
-> ⚠️ Voor volledige functionaliteit (routes en isochronen) is een actieve Cloudflare Worker proxy vereist.
-
+ 
+```bash
+# 1. Clone de repository
+git clone https://github.com/AZahed0/den-helder.git
+ 
+# 2. Open de map
+cd den-helder
+ 
+# 3. Open index.html in je browser
+open index.html
+```
+ 
+> Geen installatie of build-stap vereist.
+ 
 ---
-
+ 
 ## 📁 Projectstructuur
-
+ 
 ```
 den-helder/
-├── index.html              # Hoofdpagina
-├── inject_key.py           # Script voor API-sleutelinjectie (CI/CD)
-├── .gitignore
-└── .github/
+├── 📄 index.html           # Hoofdapplicatie
+├── 🐍 inject_key.py        # CI/CD hulpscript
+├── 🚫 .gitignore
+└── ⚙️ .github/
     └── workflows/
-        └── deploy.yml      # GitHub Actions deployment
+        └── deploy.yml      # Automatische deployment
 ```
-
+ 
 ---
-
+ 
+## 🔒 Beveiliging
+ 
+Alle externe API-verzoeken worden veilig verwerkt via een **serverless proxy**.  
+De broncode bevat **geen gevoelige gegevens**.
+ 
+---
+ 
+## 🌍 Talen & Tools
+ 
+🟧 HTML5 &nbsp;•&nbsp; 🟨 JavaScript &nbsp;•&nbsp; 🐍 Python &nbsp;•&nbsp; ☁️ Cloudflare &nbsp;•&nbsp; 🐙 GitHub Actions
+ 
+---
+ 
 ## 📄 Licentie
-
-MIT — vrij te gebruiken en aan te passen.
+ 
+MIT © [AZahed0](https://github.com/AZahed0) — vrij te gebruiken en aan te passen.
+ 
