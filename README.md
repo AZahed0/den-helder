@@ -1,2 +1,1 @@
-# 🚢 Den Helder Navigator
-
+# den-helder
