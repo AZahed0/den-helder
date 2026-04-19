@@ -2,16 +2,7 @@
  
 > **Maritieme routeplanner & bereikanalyse voor Den Helder**  
 > Gebouwd met moderne webtechnologieën voor nauwkeurige navigatie en gebiedsanalyse.
- 
-<div align="center">
-![Status](https://img.shields.io/badge/status-live-brightgreen?style=for-the-badge)
-![License](https://img.shields.io/badge/licentie-MIT-blue?style=for-the-badge)
-![HTML](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
-![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
-![Cloudflare](https://img.shields.io/badge/Cloudflare-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)
- 
-</div>
----
+
  
 ## 🌐 Live Demo
  
