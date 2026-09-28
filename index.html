@@ -63,10 +63,8 @@
             <div class="mb-5">
                 <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300"><i class="fas fa-map mr-1"></i> Kaartstijl</label>
                 <select id="baseMap" class="w-full p-3 rounded-2xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm">
-                    <option value="carto-light">CartoDB Positron (helder)</option>
-                    <option value="carto-dark">CartoDB Dark (nacht)</option>
-                    <option value="voyager">CartoDB Voyager (straten)</option>
-                </select>
+    <option value="osm">OpenStreetMap</option>
+</select>
             </div>
             <div class="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl mb-5">
                 <button data-tab="route" class="tab-btn-modern flex-1 py-2.5 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"><i class="fas fa-route"></i> Route</button>
@@ -159,14 +157,14 @@
         // ✅ PROXY URL — API key is hidden on Cloudflare server
         const PROXY_URL = 'https://ors-proxy.zahedahmad1997.workers.dev';
 
-        const tileLayers = {
-            'carto-light': L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OSM & CartoDB', subdomains: 'abcd' }),
-            'carto-dark':  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',  { attribution: 'CartoDB' }),
-            'voyager':     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: 'CartoDB Voyager' })
-        };
+       const tileLayers = {
+    'osm': L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    })
+};
 
         const map = L.map('map').setView([52.9593, 4.7597], 13);
-        let activeLayer = tileLayers['carto-light'];
+        let activeLayer = tileLayers['osm'];
         activeLayer.addTo(map);
 
         let waypoints = [], routeLayer = null, isochroneLayer = null;
